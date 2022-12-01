@@ -99,13 +99,25 @@ defmodule AdventOfCode do
     |> String.split("\n", trim: true)
   end
 
+  def as_integers(multiline_text) do
+    multiline_text
+    |> as_single_lines()
+    |> Enum.map(&String.to_integer/1)
+  end
+
   def as_doublespaced_paragraphs(multiline_text) do
     multiline_text
     |> String.split("\n\n")
   end
 
-  def as_paragraph_lines(paragraph) do
-    as_single_lines(paragraph)
+  def as_doublespaced_integers(multiline_text) do
+    multiline_text
+    |> as_doublespaced_paragraphs()
+    |> Enum.map(fn paragraph ->
+      paragraph
+      |> as_single_lines()
+      |> Enum.map(&String.to_integer/1)
+    end)
   end
 
   # Line-based helpers
