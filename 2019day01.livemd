@@ -1,0 +1,108 @@
+<!-- vim: syntax=markdown -->
+
+# Day 01
+
+```elixir
+Mix.install([
+  {:kino, "~> 0.7.0"}
+])
+
+IEx.Helpers.c("/Users/johnb/dev/2022adventOfCode/advent_of_code.ex")
+alias AdventOfCode, as: AOC
+alias Kino.Input
+```
+
+## Installation and Data
+
+<!-- livebook:{"reevaluate_automatically":true} -->
+
+```elixir
+input_day = Kino.Input.number("Day")
+```
+
+<!-- livebook:{"reevaluate_automatically":true} -->
+
+```elixir
+input_p1example = Kino.Input.textarea("Example Data")
+```
+
+<!-- livebook:{"reevaluate_automatically":true} -->
+
+```elixir
+input_p1puzzleInput = Kino.Input.textarea("Puzzle Input")
+```
+
+<!-- livebook:{"reevaluate_automatically":true} -->
+
+```elixir
+input_source_select =
+  Kino.Input.select("Source", [{:example, "example"}, {:puzzle_input, "puzzle input"}])
+```
+
+<!-- livebook:{"reevaluate_automatically":true} -->
+
+```elixir
+p1data = fn ->
+  (Kino.Input.read(input_source_select) == :example &&
+     Kino.Input.read(input_p1example)) ||
+    Kino.Input.read(input_p1puzzleInput)
+end
+```
+
+## Part 1
+
+### part 1 title here
+
+* Add part 1 puzzle instructions here
+
+```elixir
+defmodule Day01 do
+  def calc_fuel(x) do
+    Integer.floor_div(x, 3) - 2
+  end
+
+  def solve(text) do
+    text
+    |> AOC.as_single_lines()
+    |> Enum.map(&String.to_integer/1)
+    |> Enum.map(fn x -> calc_fuel(x) end)
+    |> Enum.filter(fn x -> x >= 0 end)
+    |> Enum.sum()
+  end
+
+  def solve2(fuel, sum \\ 0) do
+    if fuel > 0 do
+      # |> IO.inspect()
+      next_fuel = calc_fuel(fuel)
+      solve2(next_fuel, sum + ((next_fuel > 0 && next_fuel) || 0))
+    else
+      sum
+    end
+  end
+
+  def solve2_for_real(text) do
+    text
+    |> AOC.as_single_lines()
+    |> Enum.map(&String.to_integer/1)
+    |> Enum.map(fn x -> calc_fuel(x) end)
+    |> Enum.map(fn x -> solve2(x, x) end)
+    |> Enum.filter(fn x -> x >= 0 end)
+    |> Enum.sum()
+  end
+end
+
+# fuel1 =
+#   p1data.()
+#   |> Day01.solve()
+
+p1data.()
+|> Day01.solve2_for_real()
+
+# "Done?"
+```
+
+## Part 2 (maybe solved above)
+
+```elixir
+1969
+```
