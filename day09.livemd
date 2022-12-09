@@ -47,7 +47,19 @@ end
 
 ## Part 1
 
-### puzzle name here
+### Rope Bridge
+
+This rope bridge creaks as you walk along it. You aren't sure how old it is, or whether it can even support your weight.
+
+It seems to support the Elves just fine, though. The bridge spans a gorge which was carved out by the massive river far below you.
+
+You step carefully; as you do, the ropes stretch and twist. You decide to distract yourself by modeling rope physics; maybe you can even figure out where not to step.
+
+Consider a rope with a knot at each end; these knots mark the head and the tail of the rope. If the head moves far enough away from the tail, the tail is pulled toward the head.
+
+Due to nebulous reasoning involving Planck lengths, you should be able to model the positions of the knots on a two-dimensional grid. Then, by following a hypothetical series of motions (your puzzle input) for the head, you can determine how the tail will move.
+
+Due to the aforementioned Planck lengths, the rope must be quite short; in fact, the head (H) and tail (T) must always be touching (diagonally adjacent and even overlapping both count as touching):
 
 <!-- livebook:{"break_markdown":true} -->
 
@@ -55,22 +67,83 @@ end
 
 ```elixir
 defmodule Day09 do
+  # conceptual board is 1000x1000, and we start at 500x500
+  # track the head position and tail position, adding the
+  # tail position to a MapSet every time it moves, then
+  # count the number of positions.
   def solve(text) do
-    text
+    center = 500 * 500
+    deltas = %{"U" => -1000, "D" => 1000, "L" => -1, "R" => 1}
+
+    rope =
+      text
+      |> AOC.as_single_lines()
+      |> Enum.reduce(%{h: center, t: center, set: MapSet.new([center])}, fn line, acc ->
+        [direction, distance] = String.split(line, " ")
+        delta = deltas[direction]
+        distance = String.to_integer(distance)
+
+        IO.inspect([acc, delta, distance], label: "\nline: #{line}")
+        move(acc, delta, distance)
+      end)
+
+    Enum.count(rope.set)
+  end
+
+  def move(map, _delta, 0), do: map
+
+  def move(%{h: h, t: t, set: set} = map, delta, distance) when delta in [1, -1] do
+    IO.inspect(map)
+    h2 = h + delta
+    new_dist = abs(h2 - t)
+
+    cond do
+      new_dist == 2 ->
+        move(%{h: h2, t: h, set: MapSet.put(set, h)}, delta, distance - 1)
+
+      new_dist < 2 ->
+        move(%{h: h2, t: t, set: set}, delta, distance - 1)
+
+      new_dist > 1001 || new_dist < 999 ->
+        move(%{h: h2, t: h, set: MapSet.put(set, h)}, delta, distance - 1)
+
+      true ->
+        move(%{h: h2, t: t, set: set}, delta, distance - 1)
+    end
+  end
+
+  def move(%{h: h, t: t, set: set} = map, delta, distance) do
+    IO.inspect(map)
+    h2 = h + delta
+    new_dist = abs(h2 - t)
+
+    cond do
+      new_dist == 2 ->
+        move(%{h: h2, t: h, set: MapSet.put(set, h)}, delta, distance - 1)
+
+      new_dist < 2 ->
+        move(%{h: h2, t: t, set: set}, delta, distance - 1)
+
+      new_dist > 1001 || new_dist < 999 ->
+        move(%{h: h2, t: h, set: MapSet.put(set, h)}, delta, distance - 1)
+
+      true ->
+        move(%{h: h2, t: t, set: set}, delta, distance - 1)
+    end
   end
 end
 
 p1data.()
 |> Day09.solve()
-|> IO.inspect(label: "\n*** Part 1 solution (example: 11)")
+|> IO.inspect(label: "\n*** Part 1 solution (example: 13)")
 
-# 1920
+# 6212
 
-p1data.()
-|> Day09.solve()
-|> IO.inspect(label: "\n*** Part 2 solution (example: 26)")
+# p1data.()
+# |> Day09.solve()
+# |> IO.inspect(label: "\n*** Part 2 solution (example: )")
 
-# 2334
+# 
 ```
 
 ### Part Two

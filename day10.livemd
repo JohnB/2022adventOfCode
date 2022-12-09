@@ -1,6 +1,6 @@
 <!-- vim: syntax=markdown -->
 
-# Day 08
+# Day 10
 
 ```elixir
 Mix.install([
@@ -85,7 +85,7 @@ Consider your map; how many trees are visible from outside the grid?
 ###
 
 ```elixir
-defmodule Day08 do
+defmodule Day10 do
   def grid_rows(grid) do
     Enum.map(0..(grid.grid_height - 1), fn y ->
       Enum.map(0..(grid.grid_width - 1), fn x ->
@@ -261,13 +261,13 @@ defmodule Day08 do
 end
 
 p1data.()
-|> Day08.solve()
+|> Day10.solve()
 |> IO.inspect(label: "\n*** Part 1 solution (example: 21)")
 
 # 1669
 
 p1data.()
-|> Day08.solve2()
+|> Day10.solve2()
 |> IO.inspect(label: "\n*** Part 2 solution (example: 8)")
 
 # 331344

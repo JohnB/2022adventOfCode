@@ -140,7 +140,23 @@ defmodule Day07 do
     |> Enum.reduce(%{}, &execute/2)
   end
 
-  def solve(text) do
+  def calc_dir_sizes(dir_tree, summary \\ %{}, path \\ []) do
+    summary = put_in(summary, [path], 0)
+    # IO.inspect([dir_tree, summary, path], label: "\ncalc_dir_sizes")
+    dir_tree
+    |> Enum.reduce(summary, fn {name, value}, acc ->
+      if is_integer(value) do
+        get_and_update_in(acc, [path], &{&1, &1 + value}) |> elem(1)
+      else
+        updated_summary = calc_dir_sizes(value, acc, [name | path])
+
+        get_and_update_in(updated_summary, [path], &{&1, &1 + updated_summary[[name | path]]})
+        |> elem(1)
+      end
+    end)
+  end
+
+  def just_sizes(text) do
     tree =
       text
       |> AOC.as_single_lines()
@@ -148,35 +164,53 @@ defmodule Day07 do
 
     # |> IO.inspect()
 
-    map_paths_to_sizes = calc_dir_sizes(tree.dirs)
+    calc_dir_sizes(tree.dirs)
+    |> Enum.map(fn {k, v} -> {Enum.join(Enum.reverse(k), "/"), v} end)
+    |> Enum.map(fn {_k, v} -> v end)
   end
 
-  def calc_dir_sizes(dir_tree, summary \\ %{"/" => 0}, path \\ []) do
-    IO.inspect([dir_tree, summary, path], label: "\ncalc_dir_sizes")
+  def solve(text) do
+    just_sizes(text)
+    |> Enum.reject(fn v -> v >= 100_000 end)
+    |> Enum.sum()
+  end
 
-    dir_tree
-    |> Enum.reduce(summary, fn {name, value}, acc ->
-      IO.inspect([{name, value}, acc], label: "reducing")
+  def solve2(text) do
+    IO.inspect("???", label: 113)
+    total_space = 70_000_000
+    required_space = 30_000_000
 
-      cond do
-        is_integer(value) -> get_and_update_in(acc, path, &{&1, (&1 || 0) + value}) |> elem(1)
-        true -> calc_dir_sizes(value, acc, [name | path])
-      end
-    end)
+    sizes =
+      just_sizes(text)
+      |> Enum.sort()
+
+    used_space = Enum.max(sizes)
+    unused_space = total_space - used_space
+    minimum_deletion = required_space - unused_space
+
+    IO.inspect([total_space, required_space, used_space, unused_space, minimum_deletion],
+      label: 101
+    )
+
+    sizes
+    |> IO.inspect(label: 103)
+    |> Enum.reject(fn x -> x < minimum_deletion end)
+    |> IO.inspect(label: 105)
+    |> Enum.min()
   end
 end
 
 p1data.()
 |> Day07.solve()
-|> IO.inspect(label: "\n*** Part 1 solution (example: 11)")
+|> IO.inspect(label: "\n*** Part 1 solution (example: 95437)")
 
-# 1920
+# 1084134
 
 p1data.()
-|> Day07.solve()
-|> IO.inspect(label: "\n*** Part 2 solution (example: 26)")
+|> Day07.solve2()
+|> IO.inspect(label: "\n*** Part 2 solution (example: 24933642)")
 
-# 2334
+# 6183184
 ```
 
 ### Part Two
