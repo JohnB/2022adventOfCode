@@ -131,6 +131,79 @@ defmodule Day09 do
         move(%{h: h2, t: t, set: set}, delta, distance - 1)
     end
   end
+
+  def solve2(text) do
+    center = 500 * 500
+    deltas = %{"U" => -1000, "D" => 1000, "L" => -1, "R" => 1}
+    rope = [center, center, center, center, center, center, center, center, center, center]
+
+    rope =
+      text
+      |> AOC.as_single_lines()
+      |> Enum.reduce(%{rope: rope, set: MapSet.new([center])}, fn line, acc ->
+        [direction, distance] = String.split(line, " ")
+        delta = deltas[direction]
+        distance = String.to_integer(distance)
+
+        IO.inspect([acc, delta, distance], label: "\nline: #{line}")
+        move2(acc, delta, distance)
+      end)
+
+    Enum.count(rope.set)
+  end
+
+  def nearby(), do: [-1001, -1000, -999, -1, 1, 999, 1000, 1001]
+  def two_away(), do: [-2000, -2, 2, 2000]
+  def knights(), do: [-2001, -1999, -1002, -998, 998, 1002, 1999, 2001]
+
+  def knight_fix() do
+    # what we add when they're a knight's move away
+    %{
+      -1999 => 1001,
+      -2001 => 999,
+      -998 => 999,
+      -1002 => 1001,
+      998 => -999,
+      1002 => -1001,
+      1999 => -999,
+      2001 => -1001
+    }
+  end
+
+  def keep_together(%{rope: [head, tail], set: set} = map) do
+    new_dist = h2 - tail
+
+    cond do
+      new_dist in nearby() ->
+        map
+
+      new_dist in two_away() ->
+        move(%{rope: [h2 | knots], set: set}, delta, distance - 1)
+
+      new_dist in knights() ->
+        move(%{rope: [h2 | knots], set: set}, delta, distance - 1)
+    end
+  end
+
+  def keep_together(%{rope: [head | knots], set: set} = map) do
+    new_dist = abs(h2 - List.first(knots))
+
+    cond do
+      new_dist in nearby() ->
+        %{rope: [h2 | knots], set: set}
+
+      new_dist in knights() ->
+        move(%{rope: [h2 | knots], set: set}, delta, distance - 1)
+    end
+  end
+
+  def move2(map, _delta, 0), do: map
+
+  def move2(%{rope: [head | knots], set: set} = map, delta, distance) do
+    IO.inspect(map)
+    h2 = head + delta
+    keep_together(%{rope: [h2 | knots], set: set})
+  end
 end
 
 p1data.()
@@ -139,9 +212,9 @@ p1data.()
 
 # 6212
 
-# p1data.()
-# |> Day09.solve()
-# |> IO.inspect(label: "\n*** Part 2 solution (example: )")
+p1data.()
+|> Day09.solve()
+|> IO.inspect(label: "\n*** Part 2 solution (example: 36)")
 
 # 
 ```
