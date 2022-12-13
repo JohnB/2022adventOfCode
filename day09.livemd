@@ -83,7 +83,7 @@ defmodule Day09 do
         delta = deltas[direction]
         distance = String.to_integer(distance)
 
-        IO.inspect([acc, delta, distance], label: "\nline: #{line}")
+        # IO.inspect([acc, delta, distance], label: "\nline: #{line}")
         move(acc, delta, distance)
       end)
 
@@ -92,8 +92,8 @@ defmodule Day09 do
 
   def move(map, _delta, 0), do: map
 
-  def move(%{h: h, t: t, set: set} = map, delta, distance) when delta in [1, -1] do
-    IO.inspect(map)
+  def move(%{h: h, t: t, set: set} = _map, delta, distance) when delta in [1, -1] do
+    # IO.inspect(map)
     h2 = h + delta
     new_dist = abs(h2 - t)
 
@@ -112,8 +112,8 @@ defmodule Day09 do
     end
   end
 
-  def move(%{h: h, t: t, set: set} = map, delta, distance) do
-    IO.inspect(map)
+  def move(%{h: h, t: t, set: set} = _map, delta, distance) do
+    # IO.inspect(map)
     h2 = h + delta
     new_dist = abs(h2 - t)
 
@@ -133,7 +133,7 @@ defmodule Day09 do
   end
 
   def solve2(text) do
-    center = 500 * 500
+    center = 5000 * 5000
     deltas = %{"U" => -1000, "D" => 1000, "L" => -1, "R" => 1}
     rope = [center, center, center, center, center, center, center, center, center, center]
 
@@ -145,64 +145,61 @@ defmodule Day09 do
         delta = deltas[direction]
         distance = String.to_integer(distance)
 
-        IO.inspect([acc, delta, distance], label: "\nline: #{line}")
+        # IO.puts(line)
         move2(acc, delta, distance)
       end)
 
     Enum.count(rope.set)
   end
 
-  def nearby(), do: [-1001, -1000, -999, -1, 1, 999, 1000, 1001]
-  def two_away(), do: [-2000, -2, 2, 2000]
+  def nearby(), do: [-1001, -1000, -999, -1, 0, 1, 999, 1000, 1001]
+  def two_away(), do: [-2002, -2000, -1998, -2, 2, 1998, 2000, 2002]
   def knights(), do: [-2001, -1999, -1002, -998, 998, 1002, 1999, 2001]
 
   def knight_fix() do
     # what we add when they're a knight's move away
     %{
-      -1999 => 1001,
-      -2001 => 999,
-      -998 => 999,
-      -1002 => 1001,
-      998 => -999,
-      1002 => -1001,
-      1999 => -999,
-      2001 => -1001
+      -2001 => -1001,
+      -1999 => -999,
+      -1002 => -1001,
+      -998 => -999,
+      998 => 999,
+      1002 => 1001,
+      1999 => 999,
+      2001 => 1001
     }
   end
 
-  def keep_together(%{rope: [head, tail], set: set} = map) do
-    new_dist = h2 - tail
-
+  def keep_together([head, tail]) do
+    dist = head - tail
+    # IO.inspect([head, tail, dist])
     cond do
-      new_dist in nearby() ->
-        map
+      dist in nearby() ->
+        [head, tail]
 
-      new_dist in two_away() ->
-        move(%{rope: [h2 | knots], set: set}, delta, distance - 1)
+      dist in two_away() ->
+        [head, div(tail + head, 2)]
 
-      new_dist in knights() ->
-        move(%{rope: [h2 | knots], set: set}, delta, distance - 1)
+      dist in knights() ->
+        [head, tail + knight_fix()[dist]]
+        # true ->
+        #   IO.inspect([head, tail, dist])
     end
   end
 
-  def keep_together(%{rope: [head | knots], set: set} = map) do
-    new_dist = abs(h2 - List.first(knots))
-
-    cond do
-      new_dist in nearby() ->
-        %{rope: [h2 | knots], set: set}
-
-      new_dist in knights() ->
-        move(%{rope: [h2 | knots], set: set}, delta, distance - 1)
-    end
+  def keep_together([head, next | knots] = _list) do
+    [head, next] = keep_together([head, next])
+    # |> IO.inspect()
+    [head | keep_together([next | knots])]
   end
 
-  def move2(map, _delta, 0), do: map
-
-  def move2(%{rope: [head | knots], set: set} = map, delta, distance) do
-    IO.inspect(map)
-    h2 = head + delta
-    keep_together(%{rope: [h2 | knots], set: set})
+  def move2(map, delta, distance) do
+    Enum.reduce(1..distance, map, fn _dist, %{rope: [head | knots], set: set} = _acc ->
+      # IO.inspect(acc, label: "delta #{delta}")
+      h2 = head + delta
+      rope = keep_together([h2 | knots])
+      %{rope: rope, set: MapSet.put(set, List.last(rope))}
+    end)
   end
 end
 
@@ -213,10 +210,10 @@ p1data.()
 # 6212
 
 p1data.()
-|> Day09.solve()
+|> Day09.solve2()
 |> IO.inspect(label: "\n*** Part 2 solution (example: 36)")
 
-# 
+# 2522
 ```
 
 ### Part Two
