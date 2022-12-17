@@ -214,8 +214,11 @@ defmodule Day14 do
     end)
   end
 
+  @max_depth 2000
+  @max_sand 80000
+
   # |> IO.inspect(label: "Done at #{Enum.count(cave)}?")
-  def drop_sand(cave, {_drop_x, drop_y}) when drop_y > 200, do: cave
+  def drop_sand(cave, {_drop_x, drop_y}) when drop_y > @max_depth, do: cave
 
   def drop_sand(cave, {drop_x, drop_y}) do
     # IO.inspect([{drop_x, drop_y}, cave], label: "drop_sand (#{Enum.count(cave)})")
@@ -225,7 +228,7 @@ defmodule Day14 do
     down_right = grid_index_at(cave, {drop_x + 1, drop_y + 1})
 
     cond do
-      Enum.count(cave) > 8000 ->
+      Enum.count(cave) > @max_sand ->
         cave
 
       is_nil(cave[current]) and is_nil(cave[down_one]) ->
@@ -281,29 +284,36 @@ defmodule Day14 do
     cave = lines_to_cave(lines)
 
     pre_count = Enum.count(cave)
-    # IO.inspect(cave, label: "pre-drop_sand (#{pre_count})")
     full_cave = drop_sand(cave, {500, 0})
-    # IO.inspect(full_cave, label: "post-drop_sand (#{Enum.count(full_cave)})")
 
     post_count = Enum.count(full_cave)
     post_count - pre_count
   end
 
-  def solve2(_text) do
-    # extents = 
-    # |> AOC.as_single_lines()
-    # |> Enum.reduce(grid, fn line, acc ->
-    #   String.split(line, " -> ", trim: true)
-    #   |> Enum.map(fn x_comma_y -> 
-    #     [_x, _y] = 
-    #       String.split(x_comma_y, ",", trim: true)
-    #       |> Enum.map(&String.to_integer/1)
-    #   end)
-    #   |> Enum.chunk_every(2, 1, :discard)
-    #   |> Enum.reduce(acc, fn pair, inner_acc ->
-    #     mark_stone_line(pair, inner_acc)
-    #   end)
-    # end)
+  def cave_borders(cave) do
+    walls = Map.keys(cave) -- [:grid_width, :grid_height, :last_cell]
+    top_left = Enum.min(walls)
+    bottom_right = Enum.max(walls)
+
+    [
+      [rem(top_left, cave.grid_width), div(top_left, cave.grid_width)],
+      [rem(bottom_right, cave.grid_width), div(bottom_right, cave.grid_width)]
+    ]
+  end
+
+  def solve2(text) do
+    lines = line_coordinates(text)
+    cave = lines_to_cave(lines)
+    [[x1, _y1], [x2, y2]] = cave_borders(cave)
+
+    # add a line below the bottom - very long
+    bordered_cave = mark_stone_line([[x1 - y2, y2 + 2], [x2 + y2, y2 + 2]], cave)
+
+    pre_count = Enum.count(bordered_cave)
+    full_cave = drop_sand(bordered_cave, {500, 0})
+
+    post_count = Enum.count(full_cave)
+    post_count - pre_count
   end
 end
 
@@ -313,11 +323,11 @@ p1data.()
 
 # 614
 
-# p1data.()
-# |> Day14.solve2()
-# |> IO.inspect(label: "\n*** Part 2 solution (example: )")
+p1data.()
+|> Day14.solve2()
+|> IO.inspect(label: "\n*** Part 2 solution (example: 93)")
 
-#
+# 26170
 ```
 
 ### Part Two
