@@ -55,6 +55,14 @@ end
 
 ```elixir
 defmodule Day17 do
+  # Assume a 4x4 grid for the rocks
+  @rocks [
+    %{width: 4, cells: [0, 1, 2, 3]},
+    %{width: 4, cells: [1, 4, 5, 6, 9]},
+    %{width: 4, cells: [2, 6, 8, 9, 10]},
+    %{width: 4, cells: [0, 4, 8, 12]},
+    %{width: 4, cells: [0, 1, 4, 5]}
+  ]
   def solve(text) do
     text
     |> AOC.as_single_lines()

@@ -286,40 +286,79 @@ Figure out which monkeys to chase by counting how many items they inspect over 2
 
 ```elixir
 defmodule Day11 do
+  def operate(worry, operator, "old" = _operand), do: operate(worry, operator, "#{worry}")
+  def operate(worry, "+", operand), do: worry + String.to_integer(operand)
+  def operate(worry, "*", operand), do: worry * String.to_integer(operand)
+
+  def parse_monkeys(text) do
+    text
+    |> AOC.as_doublespaced_paragraphs()
+    |> Enum.map(fn paragraph ->
+      # IO.inspect(paragraph, label: paragraph)
+      [_line, id, worries, operator, operand, divisor, true_throw, false_throw] =
+        Regex.run(
+          ~r/Monkey (\d+)\:\n.*Starting items: (.*)\n\s+Operation\: new = old (.+) (.+)\n\s+Test\: divisible by (\d+)\n\s+If true\: throw to monkey (\d+)\n\s+If false\: throw to monkey (\d+)/,
+          paragraph
+        )
+
+      # |> IO.inspect()
+      %{
+        id: id,
+        worries: worries |> String.split(", ") |> Enum.map(fn x -> String.to_integer(x) end),
+        operator: operator,
+        operand: operand,
+        divisor: divisor |> String.to_integer(),
+        true_throw: true_throw,
+        false_throw: false_throw,
+        inspects: 0
+      }
+    end)
+  end
+
+  def to_monkey_map(monkeys) do
+    Enum.reduce(
+      monkeys,
+      %{
+        monkey_count: Enum.count(monkeys),
+        monkey_order: Enum.map(monkeys, &{&1.id})
+      },
+      fn monkey, acc ->
+        put_in(acc, [monkey.id], monkey)
+      end
+    )
+  end
+
   def solve(text) do
-    monkeys =
-      text
-      |> AOC.as_doublespaced_paragraphs()
-      |> Enum.map(fn paragraph ->
-        # IO.inspect(paragraph, label: paragraph)
-        [_line, who, what, op, operand, divisor, true_throw, false_throw] =
-          Regex.run(
-            ~r/Monkey (\d+)\:\n.*Starting items: (.*)\n\s+Operation\: new = old (.+) (.+)\n\s+Test\: divisible by (\d+)\n\s+If true\: throw to monkey (\d+)\n\s+If false\: throw to monkey (\d+)/,
-            paragraph
-          )
+    monkey_map = parse_monkeys(text) |> to_monkey_map()
+    # |> IO.inspect(label: "monkey_map")
 
-        # |> IO.inspect()
-        %{
-          who: who,
-          what: what |> String.split(", ") |> Enum.map(fn x -> String.to_integer(x) end),
-          op: op,
-          operand: operand,
-          divisor: divisor |> String.to_integer(),
-          true_throw: true_throw,
-          false_throw: false_throw
-        }
-      end)
+    [most, second_most | _rest] =
+      Enum.reduce(1..20, monkey_map, fn round, outer_acc ->
+        Enum.reduce(monkey_map.monkey_order, outer_acc, fn monkey_id, inner_acc ->
+          acc_with_updated_inspects =
+            inner_acc
+            |> get_and_update_in(monkey, [:inspects], &{&1, &1 + Enum.count(monkey.worries)})
+            |> elem(1)
 
-    counts =
-      Enum.reduce(1..20, monkeys, fn _round, outer ->
-        Enum.reduce(monkeys, monkeys, fn _round, inner ->
-          nil
+          Enum.reduce(inner_acc[monkey_id].worries, acc_with_updated_inspects, fn worry, map ->
+            new_worry = operate(worry, monkey.op, monkey.operand)
+            relaxed = div(new_worry, 3)
+
+            recipient =
+              (rem(relaxed, monkey.divisor) == 0 && monkey.true_throw) || monkey.false_throw
+
+            get_and_update_in(map, [recipient, :worries], &{&1, &1 ++ [relaxed]}) |> elem(1)
+            # |> IO.inspect(label: "throws")
+          end)
         end)
       end)
-      |> Enum.map(fn monkey -> Enum.count(monkey.what) end)
+      |> IO.inspect(label: "final monkeys")
+      |> Enum.map(fn monkey -> monkey.inspects end)
       |> Enum.sort()
+      |> Enum.reverse()
+      |> IO.inspect(label: "counts")
 
-    counts[-1] * counts[-2]
+    most * second_most
   end
 
   def solve2(_text) do
